@@ -1,0 +1,3 @@
+
+terraform init -backend-config="resource_group_name=tf-state-rg" -backend-config="storage_account_name=tfstatemaelzayenonprod" -backend-config="container_name=akstfstate"
+
