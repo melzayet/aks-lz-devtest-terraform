@@ -42,3 +42,26 @@ output "kv_private_zone_id" {
 output "kv_private_zone_name" {
   value = azurerm_private_dns_zone.kv-dns.name
 }
+
+
+# # Deploy DNS Private Zone for Cosmos
+
+resource "azurerm_private_dns_zone" "cosmos-dns" {
+  name                = "privatelink.documents.azure.com"
+  resource_group_name = azurerm_resource_group.spoke-rg.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "lz_cosmos" {
+  name                  = "lz_to_cosmos"
+  resource_group_name   = azurerm_resource_group.spoke-rg.name
+  private_dns_zone_name = azurerm_private_dns_zone.cosmos-dns.name
+  virtual_network_id    = azurerm_virtual_network.vnet.id
+}
+
+output "cosmos_private_zone_id" {
+  value = azurerm_private_dns_zone.cosmos-dns.id
+}
+
+output "cosmos_private_zone_name" {
+  value = azurerm_private_dns_zone.cosmos-dns.name
+}

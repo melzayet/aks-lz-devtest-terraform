@@ -19,7 +19,18 @@ resource "azurerm_subnet" "pod" {
   resource_group_name                            = azurerm_resource_group.spoke-rg.name
   virtual_network_name                           = azurerm_virtual_network.vnet.name
   address_prefixes                               = ["10.1.24.0/21"]
-  private_link_service_network_policies_enabled = false
+  private_link_service_network_policies_enabled = true
+  delegation {
+          name = "aks-delegation"
+
+          service_delegation {
+              actions = [
+                  "Microsoft.Network/virtualNetworks/subnets/join/action",
+                ] 
+              name    = "Microsoft.ContainerService/managedClusters"
+            }
+  }
+
 }
 
 output "pod_subnet_id" {
@@ -31,7 +42,17 @@ resource "azurerm_subnet" "spotPod" {
   resource_group_name                            = azurerm_resource_group.spoke-rg.name
   virtual_network_name                           = azurerm_virtual_network.vnet.name
   address_prefixes                               = ["10.1.32.0/21"]
-  private_link_service_network_policies_enabled = false
+  private_link_service_network_policies_enabled = true
+  delegation {
+          name = "aks-delegation"
+
+          service_delegation {
+              actions = [
+                  "Microsoft.Network/virtualNetworks/subnets/join/action",
+                ] 
+              name    = "Microsoft.ContainerService/managedClusters"
+            }
+  }
 }
 
 output "spotPod_subnet_id" {
@@ -42,6 +63,34 @@ resource "azurerm_network_security_group" "aks-nsg" {
   name                = "${azurerm_virtual_network.vnet.name}-${azurerm_subnet.aks.name}-nsg"
   resource_group_name = azurerm_resource_group.spoke-rg.name
   location            = azurerm_resource_group.spoke-rg.location
+}
+
+resource "azurerm_network_security_rule" "allow-http" {
+  name                        = "allow-http"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "80"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke-rg.name
+  network_security_group_name = azurerm_network_security_group.aks-nsg.name
+}
+
+resource "azurerm_network_security_rule" "allow-https" {
+  name                        = "allow-https"
+  priority                    = 110
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.spoke-rg.name
+  network_security_group_name = azurerm_network_security_group.aks-nsg.name
 }
 
 resource "azurerm_network_security_group" "pod-nsg" {

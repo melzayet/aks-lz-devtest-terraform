@@ -32,3 +32,16 @@ module "create_kv" {
   zone_resource_group_name = data.terraform_remote_state.existing-lz.outputs.lz_rg_name
 
 }
+
+# Create a Secret for GH PAT
+resource "azurerm_key_vault_secret" "pat-maelzayet-github" {
+  depends_on=[module.create_kv]
+
+  name         = "pat-maelzayet-github"
+  value        = "${var.pat}"
+  key_vault_id = module.create_kv.kv_id
+
+  tags = {
+    environment = "staging"
+  }
+}
