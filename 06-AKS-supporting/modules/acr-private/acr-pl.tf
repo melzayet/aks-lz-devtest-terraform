@@ -30,6 +30,18 @@ output "acr_id" {
   value = azurerm_container_registry.acr.id
 }
 
+output "acr_name" {
+  value = azurerm_container_registry.acr.name
+}
+
+output "acr_location" {
+  value = azurerm_container_registry.acr.location
+}
+
+output "acr_rg" {
+  value = azurerm_container_registry.acr.resource_group_name
+}
+
 output "custom_dns_configs" {
     value = azurerm_private_endpoint.acr-endpoint.custom_dns_configs
 }
