@@ -15,12 +15,6 @@ resource "azurerm_user_assigned_identity" "mi-aks-cp" {
 
 # Role Assignments for Control Plane MSI
 
-resource "azurerm_role_assignment" "aks-to-rt" {
-  scope                = data.terraform_remote_state.existing-lz.outputs.lz_rt_id
-  role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.mi-aks-cp.principal_id
-}
-
 resource "azurerm_role_assignment" "aks-to-vnet" {
   scope                = data.terraform_remote_state.existing-lz.outputs.lz_vnet_id
   role_definition_name = "Network Contributor"
@@ -54,6 +48,8 @@ module "aks" {
     azurerm_role_assignment.aks-to-dnszone
   ]
 
+  wif_app_object_id   = var.wif_app_object_id
+  wif_subject         = var.wif_subject
   resource_group_name = data.terraform_remote_state.existing-lz.outputs.lz_rg_name
   location            = data.terraform_remote_state.existing-lz.outputs.lz_rg_location
   prefix              = "aks-${var.prefix}"
@@ -96,4 +92,9 @@ resource "azurerm_role_assignment" "aks-to-acr" {
   scope                = data.terraform_remote_state.aks-support.outputs.container_registry_id
   role_definition_name = "AcrPull"
   principal_id         = module.aks.kubelet_id
+}
+
+
+output "kubelet_id" {
+  value = module.aks.kubelet_id
 }

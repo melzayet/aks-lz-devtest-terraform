@@ -20,16 +20,6 @@ resource "azurerm_subnet" "pod" {
   virtual_network_name                           = azurerm_virtual_network.vnet.name
   address_prefixes                               = ["10.1.24.0/21"]
   private_link_service_network_policies_enabled = true
-  delegation {
-          name = "aks-delegation"
-
-          service_delegation {
-              actions = [
-                  "Microsoft.Network/virtualNetworks/subnets/join/action",
-                ] 
-              name    = "Microsoft.ContainerService/managedClusters"
-            }
-  }
 
 }
 
@@ -43,16 +33,6 @@ resource "azurerm_subnet" "spotPod" {
   virtual_network_name                           = azurerm_virtual_network.vnet.name
   address_prefixes                               = ["10.1.32.0/21"]
   private_link_service_network_policies_enabled = true
-  delegation {
-          name = "aks-delegation"
-
-          service_delegation {
-              actions = [
-                  "Microsoft.Network/virtualNetworks/subnets/join/action",
-                ] 
-              name    = "Microsoft.ContainerService/managedClusters"
-            }
-  }
 }
 
 output "spotPod_subnet_id" {
@@ -112,4 +92,32 @@ resource "azurerm_subnet_network_security_group_association" "podSubnet" {
 resource "azurerm_subnet_network_security_group_association" "spotPodSubnet" {
   subnet_id                 = azurerm_subnet.spotPod.id
   network_security_group_id = azurerm_network_security_group.pod-nsg.id
+}
+
+resource "azurerm_public_ip" "natGWPIP" {
+  name                = "nat-gateway-publicIP"
+  location            = azurerm_resource_group.spoke-rg.location
+  resource_group_name = azurerm_resource_group.spoke-rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  zones               = ["1"]
+}
+
+resource "azurerm_nat_gateway" "natGW" {
+  name                    = "nat-Gateway"
+  location                = azurerm_resource_group.spoke-rg.location
+  resource_group_name     = azurerm_resource_group.spoke-rg.name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  zones                   = ["1"]
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "pipassoc" {
+  nat_gateway_id       = azurerm_nat_gateway.natGW.id
+  public_ip_address_id = azurerm_public_ip.natGWPIP.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "subnetassoc" {
+  subnet_id      = azurerm_subnet.aks.id
+  nat_gateway_id = azurerm_nat_gateway.natGW.id
 }

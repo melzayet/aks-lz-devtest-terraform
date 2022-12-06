@@ -33,23 +33,3 @@ output "lz_vnet_name" {
 output "lz_vnet_id" {
   value = azurerm_virtual_network.vnet.id
 }
-
-# # Create Route Table for Landing Zone
-# (All subnets in the landing zone will need to connect to this Route Table)
-resource "azurerm_route_table" "route_table" {
-  name                          = "rt-${var.lz_prefix}"
-  resource_group_name           = azurerm_resource_group.spoke-rg.name
-  location                      = azurerm_resource_group.spoke-rg.location
-  disable_bgp_route_propagation = false
-
-  route {
-    name                   = "route_to_firewall"
-    address_prefix         = "0.0.0.0/0"
-    next_hop_type          = "VirtualAppliance"
-    next_hop_in_ip_address = "10.0.1.4"
-  }
-}
-
-output "lz_rt_id" {
-  value = azurerm_route_table.route_table.id
-}
